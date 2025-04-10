@@ -56,7 +56,9 @@ class Pipeline:
             **{k: os.getenv(k, v.default) for k, v in self.Valves.model_fields.items()}
         )
         self.last_emit_time = 0
-        pass
+        print("\n")
+        print(self.valves)
+        print("\n")
 
     async def emit_status(
             self,
