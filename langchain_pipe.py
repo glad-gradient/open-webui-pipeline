@@ -52,6 +52,9 @@ class Pipeline:
         self.type = "pipe"
         self.id = "langchain_pipe"
         self.name = "LangChain Pipe"
+        print("\n")
+        print(self.name)
+        print("\n")
         self.valves = self.Valves(
             **{k: os.getenv(k, v.default) for k, v in self.Valves.model_fields.items()}
         )
