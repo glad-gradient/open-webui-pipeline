@@ -27,17 +27,26 @@ from langchain_community.llms import Ollama
 
 class Pipeline:
     class Valves(BaseModel):
-        base_url: str = Field(default="http://localhost:11434")
-        ollama_embed_model: str = Field(default="nomic-embed-text")
-        ollama_model: str = Field(default="llama3.1")
-        openai_api_key: str = Field(default="...")
-        openai_model: str = Field(default="gpt3.5-turbo")
-        emit_interval: float = Field(
+        BASE_URL: str = Field(default="http://localhost:11434")
+        OLLAMA_MODEL: str = Field(default="llama3.1")
+        EMIT_INTERVAL: float = Field(
             default=2.0, description="Interval in seconds between status emissions"
         )
-        enable_status_indicator: bool = Field(
+        ENABLE_STATUS_INDICATOR: bool = Field(
             default=True, description="Enable or disable status indicator emissions"
         )
+    # class Valves(BaseModel):
+    #     base_url: str = Field(default="http://localhost:11434")
+    #     ollama_embed_model: str = Field(default="nomic-embed-text")
+    #     ollama_model: str = Field(default="llama3.1")
+    #     openai_api_key: str = Field(default="...")
+    #     openai_model: str = Field(default="gpt3.5-turbo")
+    #     emit_interval: float = Field(
+    #         default=2.0, description="Interval in seconds between status emissions"
+    #     )
+    #     enable_status_indicator: bool = Field(
+    #         default=True, description="Enable or disable status indicator emissions"
+    #     )
 
     def __init__(self):
         self.type = "pipe"
