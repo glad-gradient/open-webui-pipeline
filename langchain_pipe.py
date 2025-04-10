@@ -75,14 +75,14 @@ class Pipeline:
             )
             self.last_emit_time = current_time
 
-    async def pipe(self, body: dict,
+    def pipe(self, body: dict,
                    __user__: Optional[dict] = None,
                    __event_emitter__: Callable[[dict], Awaitable[None]] = None,
                    __event_call__: Callable[[dict], Awaitable[dict]] = None,
                    ) -> Optional[dict]:
-        await self.emit_status(
-            __event_emitter__, "info", "/initiating Chain", False
-        )
+        # await self.emit_status(
+        #     __event_emitter__, "info", "/initiating Chain", False
+        # )
 
         # ======================================================================================================================================
         # MODEL SETUP
@@ -127,9 +127,9 @@ class Pipeline:
         # ======================================================================================================================================
         # Langchain Calling
         # ======================================================================================================================================
-        await self.emit_status(
-            __event_emitter__, "info", "Starting Chain", False
-        )
+        # await self.emit_status(
+        #     __event_emitter__, "info", "Starting Chain", False
+        # )
         messages = body.get("messages", [])
         response = ""
         # Verify a message is available
@@ -141,12 +141,12 @@ class Pipeline:
                 # Set assitant message with chain reply
                 body["messages"].append({"role": "assistant", "content": response})
             except Exception as e:
-                await self.emit_status(__event_emitter__, "error", f"Error during sequence execution: {str(e)}", True)
+                # await self.emit_status(__event_emitter__, "error", f"Error during sequence execution: {str(e)}", True)
                 return {"error": str(e)}
         # If no message is available alert user
         else:
-            await self.emit_status(__event_emitter__, "error", "No messages found in the request body", True)
+            # await self.emit_status(__event_emitter__, "error", "No messages found in the request body", True)
             body["messages"].append({"role": "assistant", "content": "No messages found in the request body"})
 
-        await self.emit_status(__event_emitter__, "info", "Complete", True)
+        # await self.emit_status(__event_emitter__, "info", "Complete", True)
         return response
