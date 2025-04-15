@@ -1,104 +1,52 @@
 """
 title: LangChain Pipe
 id: langchain_pipe
-author: Colby Sawyer @ Attollo LLC (mailto:colby.sawyer@attollodefense.com)
-author_url: https://github.com/ColbySawyer7
+author: Unknown
+author_url: Unknown
+description: This module defines a Pipe class that utilizes LangChain
 version: 0.1.0
-requirements: langchain, langchain-core, langchain-community
-
-This module defines a Pipe class that utilizes LangChain
+requirements: langchain==0.3.23, langchain-core, langchain-community, pydantic==2.9.2
 """
 
-from typing import Optional, Callable, Awaitable
+from typing import List, Union, Generator, Iterator
 from pydantic import BaseModel, Field
 import os
 import time
+from logging import getLogger
 
-# import LangChain dependencies
-from langchain_core.prompts import ChatPromptTemplate
-from langchain.schema import StrOutputParser
-from langchain_core.runnables import RunnablePassthrough
-from langchain_community.llms import Ollama
-
+logger = getLogger(__name__)
+logger.setLevel("INFO")
 
 # Uncomment to use OpenAI and FAISS
 # from langchain_openai import ChatOpenAI
 # from langchain_community.vectorstores import FAISS
 
+
 class Pipeline:
     class Valves(BaseModel):
-        BASE_URL: str = Field(default="http://localhost:11434")
-        OLLAMA_MODEL: str = Field(default="llama3.1")
-        EMIT_INTERVAL: float = Field(
+        base_url: str = Field(default="http://localhost:11434")
+        ollama_model: str = Field(default="llama3.1")
+        emit_interval: float = Field(
             default=2.0, description="Interval in seconds between status emissions"
         )
-        ENABLE_STATUS_INDICATOR: bool = Field(
+        enable_status_indicator: bool = Field(
             default=True, description="Enable or disable status indicator emissions"
         )
-    # class Valves(BaseModel):
-    #     base_url: str = Field(default="http://localhost:11434")
-    #     ollama_embed_model: str = Field(default="nomic-embed-text")
-    #     ollama_model: str = Field(default="llama3.1")
-    #     openai_api_key: str = Field(default="...")
-    #     openai_model: str = Field(default="gpt3.5-turbo")
-    #     emit_interval: float = Field(
-    #         default=2.0, description="Interval in seconds between status emissions"
-    #     )
-    #     enable_status_indicator: bool = Field(
-    #         default=True, description="Enable or disable status indicator emissions"
-    #     )
 
     def __init__(self):
-        self.type = "pipe"
         self.id = "langchain_pipe"
         self.name = "LangChain Pipe"
-        print("\n")
-        print(self.name)
-        print("\n")
-        self.valves = self.Valves(
-            **{k: os.getenv(k, v.default) for k, v in self.Valves.model_fields.items()}
-        )
-        self.last_emit_time = 0
-        print("\n")
-        print(self.valves)
-        print("\n")
-
-    async def emit_status(
-            self,
-            __event_emitter__: Callable[[dict], Awaitable[None]],
-            level: str,
-            message: str,
-            done: bool,
-    ):
-        current_time = time.time()
-        if (
-                __event_emitter__
-                and self.valves.enable_status_indicator
-                and (
-                current_time - self.last_emit_time >= self.valves.emit_interval or done
-        )
-        ):
-            await __event_emitter__(
-                {
-                    "type": "status",
-                    "data": {
-                        "status": "complete" if done else "in_progress",
-                        "level": level,
-                        "description": message,
-                        "done": done,
-                    },
-                }
-            )
-            self.last_emit_time = current_time
-
-    def pipe(self, body: dict,
-                   __user__: Optional[dict] = None,
-                   __event_emitter__: Callable[[dict], Awaitable[None]] = None,
-                   __event_call__: Callable[[dict], Awaitable[dict]] = None,
-                   ) -> Optional[dict]:
-        # await self.emit_status(
-        #     __event_emitter__, "info", "/initiating Chain", False
+        self.valves = self.Valves()
+        # self.valves = self.Valves(
+        #     **{k: os.getenv(k, v.default) for k, v in self.Valves.model_fields.items()}
         # )
+        self.last_emit_time = 0
+
+    def pipe(self, user_message: str, model_id: str, messages: List[dict], body: dict) -> Union[str, Generator, Iterator]:
+        from langchain_core.prompts.chat import ChatPromptTemplate
+        from langchain.schema import StrOutputParser
+        from langchain_core.runnables import RunnablePassthrough
+        from langchain_community.llms import Ollama
 
         # ======================================================================================================================================
         # MODEL SETUP
@@ -143,26 +91,20 @@ class Pipeline:
         # ======================================================================================================================================
         # Langchain Calling
         # ======================================================================================================================================
-        # await self.emit_status(
-        #     __event_emitter__, "info", "Starting Chain", False
-        # )
-        messages = body.get("messages", [])
+        # messages = body.get("messages", [])
         response = ""
         # Verify a message is available
-        if messages:
-            question = messages[-1]["content"]
+        if user_message:
+            question = user_message
             try:
                 # Invoke Chain
                 response = chain.invoke(question)
                 # Set assitant message with chain reply
                 body["messages"].append({"role": "assistant", "content": response})
             except Exception as e:
-                # await self.emit_status(__event_emitter__, "error", f"Error during sequence execution: {str(e)}", True)
                 return {"error": str(e)}
         # If no message is available alert user
         else:
-            # await self.emit_status(__event_emitter__, "error", "No messages found in the request body", True)
             body["messages"].append({"role": "assistant", "content": "No messages found in the request body"})
 
-        # await self.emit_status(__event_emitter__, "info", "Complete", True)
         return response
